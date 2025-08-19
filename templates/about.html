@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container wide" style="padding:28px 40px; max-width:1100px;">
+  <header style="text-align:center; margin-bottom:18px;">
+    <h1 style="margin:0;"> Fusion Five — About</h1>
+    <p style="margin-top:8px; color:#475569; font-weight:500;">
+      Schema-driven AutoEDA: validate → clean → profile → export (HTML / high-fidelity PDF)
+    </p>
+  </header>
+
+  <section style="display:flex; gap:22px; align-items:flex-start; margin-bottom:22px;">
+    <div style="flex:1; min-width:320px;">
+      <h3 style="margin-bottom:8px;">What is EchoEDA ?</h3>
+      <p style="color:#475569; line-height:1.5;">
+        EchoEDA is a lightweight Flask AutoEDA starter that accepts a user dataset,
+        applies a user-provided schema (mappings, types, imputation, outlier handling and rule checks),
+        generates an interactive profiling HTML report (ydata/pandas-profiling), and exports high-fidelity PDFs
+        (Playwright preferred; WeasyPrint / wkhtmltopdf fallbacks).
+      </p>
+
+      <h4 style="margin-top:16px;">Key features</h4>
+      <ul style="color:#334155; line-height:1.6;">
+        <li>Upload CSV / Excel and generate an interactive EDA profile (HTML).</li>
+        <li>Schema-driven cleaning: column mappings, types, keep-list and weight column.</li>
+        <li>Imputation: <code>mean</code>, <code>median</code>, or <code>knn</code>.</li>
+        <li>Outlier detection (IQR / z-score) with optional winsorization.</li>
+        <li>Rule-based validation with example rows for violations.</li>
+        <li>Weighted estimates (mean & SE) by group or overall.</li>
+        <li>Workflow logs saved as JSON for reproducibility.</li>
+      </ul>
+    </div>
+
+    <div style="width:360px; background:linear-gradient(180deg,#ffffff,#f7fafc); padding:18px; border-radius:12px; box-shadow:var(--shadow);">
+      <h4 style="margin-top:0;">Quick start</h4>
+      <pre style="background:#0f172a;color:#f8fafc;padding:12px;border-radius:8px;overflow:auto;font-size:0.95rem;">
+python3 -m venv virenv
+source virenv/bin/activate
+pip install -r requirements.txt
+
+# optional: Playwright for PDF
+pip install playwright
+python -m playwright install chromium
+
+python app.py
+# open http://127.0.0.1:5000
+      </pre>
+      <p style="font-size:0.9rem; color:#475569; margin-top:8px;">Tip: use Python 3.10/3.11 if ydata-profiling fails on newer interpreters.</p>
+    </div>
+  </section>
+
+  <section style="margin-bottom:20px;">
+    <h3 style="margin-bottom:8px;">PDF export notes</h3>
+    <ul style="color:#334155; line-height:1.6;">
+      <li><strong>Playwright (recommended)</strong> — renders JS charts faithfully. Install and run <code>python -m playwright install chromium</code>.</li>
+      <li><strong>WeasyPrint</strong> — good for static HTML (needs system libs: cairo/pango).</li>
+      <li><strong>wkhtmltopdf/pdfkit</strong> — fallback; behavior varies on JS-heavy pages.</li>
+      <li>The app tries Playwright → WeasyPrint → pdfkit and falls back to HTML if none available.</li>
+    </ul>
+  </section>
+
+  <section style="margin-bottom:20px;">
+    <h3 style="margin-bottom:8px;">Troubleshooting</h3>
+    <ul style="color:#334155; line-height:1.6;">
+      <li><strong>ydata-profiling install errors:</strong> run under Python 3.10/3.11 or remove the profiling step and use simple EDA helpers.</li>
+      <li><strong>Playwright PDF issues:</strong> ensure <code>python -m playwright install chromium</code> ran in the same virtualenv.</li>
+      <li><strong>PDF formatting looks off:</strong> try increasing Playwright wait-time in <code>utils.html_to_pdf(..., playwright_wait=1.2)</code> or use <code>convert_with_playwright.py</code>.</li>
+      <li><strong>About page still shows upload:</strong> clear browser cache and verify you edited <code>templates/about.html</code> (not a duplicate).</li>
+    </ul>
+  </section>
+
+  <section style="margin-bottom:20px;">
+    <h3 style="margin-bottom:8px;">Project structure</h3>
+    <ul style="color:#334155; line-height:1.6;">
+      <li><code>app.py</code> — Flask routes and flow</li>
+      <li><code>utils.py</code> — file ops, cleaning, profile generation, HTML→PDF helper</li>
+      <li><code>reporting.py</code> — small helpers for saving/loading workflow logs</li>
+      <li><code>templates/</code> — Jinja templates (<code>base.html</code>, <code>upload.html</code>, <code>view_report.html</code>, <code>about.html</code>)</li>
+      <li><code>reports/</code> — generated HTML/PDF and JSON logs</li>
+      <li><code>uploads/</code> — user-uploaded datasets</li>
+    </ul>
+  </section>
+
+  <footer style="display:flex; gap:12px; align-items:center; margin-top:8px;">
+    <a class="btn-primary" href="{{ url_for('index') }}" style="text-decoration:none; display:inline-block;">⬅ Go to Upload</a>
+    <a class="btn-primary" href="https://github.com/Swapnil04-debug" target="_blank" style="text-decoration:none; display:inline-block; background:linear-gradient(135deg,#f093fb,#f5576c);">Repo (placeholder)</a>
+    <div style="margin-left:auto; color:#475569; font-size:0.95rem;">Built with ❤️ — Fusion Five</div>
+  </footer>
+</div>
+{% endblock %}

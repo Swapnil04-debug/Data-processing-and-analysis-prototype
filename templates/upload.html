@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+    <div class="loading-text">Generating Insights...</div>
+</div>
+
+<style>
+    /* --- New 'About' Button Style --- */
+    .about-btn {
+        position: absolute;
+        top: 45px;
+        right: 40px;
+        width: 44px;
+        height: 44px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 1.2rem;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        z-index: 100;
+    }
+
+    .about-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: scale(1.1);
+        box-shadow: 0 0 15px rgba(255,255,255,0.2);
+    }
+    
+    @media (max-width: 768px) {
+        .about-btn {
+            top: 20px;
+            right: 20px;
+        }
+    }
+    /* --- End of New Styles --- */
+
+
+    /* Loading Overlay Styles */
+    .loading-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(10, 5, 25, 0.85);
+        backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+        display: none; justify-content: center; align-items: center; flex-direction: column;
+        z-index: 9999; opacity: 0; transition: opacity 0.4s ease;
+    }
+    .loading-overlay.show { display: flex; opacity: 1; }
+    .spinner {
+        width: 60px; height: 60px; border: 5px solid rgba(255, 255, 255, 0.3);
+        border-top-color: #667eea; border-radius: 50%;
+        animation: spin 1s linear infinite; margin-bottom: 25px;
+    }
+    .loading-text { color: #ffffff; font-size: 1.5rem; font-weight: 500; text-shadow: 0 0 10px rgba(255, 255, 255, 0.3); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* General page fixes */
+    .container {
+        background: transparent !important; box-shadow: none !important;
+        backdrop-filter: none !important; border: none !important;
+        padding: 0 !important;
+    }
+    .container > h1, .page-title {
+        background: none !important; -webkit-text-fill-color: #ffffff !important;
+        color: #ffffff !important; animation: none !important; filter: none !important;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5) !important;
+    }
+    
+    .upload-container {
+        max-width: 600px; margin: 0 auto; padding: 40px 20px;
+        position: relative; /* Needed for absolute positioning of about-btn */
+    }
+    .page-header { text-align: center; margin-bottom: 10px; }
+    .page-title { font-size: 2.2rem; font-weight: 700; margin-bottom: 12px; }
+    .page-subtitle { color: rgba(255, 255, 255, 0.9); font-size: 1.1rem; font-weight: 400; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6); margin-bottom: 40px; }
+    .upload-card {
+        background: rgba(28, 28, 42, 0.55); backdrop-filter: blur(14px) saturate(150%);
+        -webkit-backdrop-filter: blur(14px) saturate(150%);
+        border-radius: 20px; padding: 40px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+    .file-drop-zone {
+        border: 2px dashed rgba(255, 255, 255, 0.5); border-radius: 16px; padding: 60px 20px;
+        text-align: center; background: rgba(255, 255, 255, 0.05); transition: all 0.3s ease;
+        cursor: pointer; margin-bottom: 24px;
+    }
+    .upload-icon { font-size: 3rem; margin-bottom: 20px; display: inline-block; color: #fff; }
+    .upload-text { font-size: 1.2rem; color: #ffffff; font-weight: 600; margin-bottom: 8px; }
+    .upload-subtext { color: rgba(255, 255, 255, 0.8); font-size: 0.95rem; margin-bottom: 16px; }
+    .file-types { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+    .file-type-tag {
+        color: white; padding: 6px 14px; border-radius: 20px; font-size: 0.8rem;
+        font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2); transition: all 0.3s ease;
+    }
+    .file-type-tag:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 6px 15px rgba(0,0,0,0.3); filter: brightness(1.15); }
+    .csv-tag { background: linear-gradient(45deg, #4facfe, #00f2fe); }
+    .xls-tag { background: linear-gradient(45deg, #43e97b, #38f9d7); }
+    .xlsx-tag { background: linear-gradient(45deg, #667eea, #764ba2); }
+    .hidden-input { display: none; }
+    .file-info { background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 16px; margin-top: 24px; display: none; }
+    .file-info.show { display: block; }
+    .file-name { font-weight: 600; color: #ffffff; font-size: 0.95rem; }
+    .submit-btn { width: 100%; background: linear-gradient(45deg, #667eea, #764ba2); color: white; border: none; padding: 16px 24px; font-size: 1.1rem; font-weight: 600; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); margin-top: 24px; }
+    .submit-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4); }
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+</style>
+
+<div class="upload-container">
+    
+    <a href="{{ url_for('about') }}" class="about-btn" title="About this App">
+        <i class="fas fa-info-circle"></i>
+    </a>
+    
+    <div class="page-header">
+        <h1 class="page-title" style="padding-top:20px;">Upload Dataset</h1>
+        <p class="page-subtitle">Transform your data into comprehensive insights</p>
+    </div>
+
+    <div class="upload-card">
+        <form id="uploadForm" action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data">
+            <div class="file-drop-zone" id="dropZone">
+                <div class="upload-icon">📊</div>
+                <div class="upload-text">Drop your dataset here</div>
+                <div class="upload-subtext">or click to browse files</div>
+                <div class="file-types">
+                    <span class="file-type-tag csv-tag">CSV</span>
+                    <span class="file-type-tag xls-tag">XLS</span>
+                    <span class="file-type-tag xlsx-tag">XLSX</span>
+                </div>
+            </div>
+
+            <input
+                type="file"
+                id="fileInput"
+                name="file"
+                accept=".csv,.xls,.xlsx"
+                required
+                class="hidden-input"
+            >
+
+            <div class="file-info" id="fileInfo">
+                <div class="file-name" id="fileName"></div>
+            </div>
+
+            <button type="submit" class="submit-btn" id="submitBtn" disabled>
+                Generate EDA Report
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileNameEl = document.getElementById('fileName');
+        const submitBtn = document.getElementById('submitBtn');
+        const uploadForm = document.getElementById('uploadForm');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); });
+        dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            if (e.dataTransfer.files.length > 0) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        uploadForm.addEventListener('submit', function() {
+            loadingOverlay.classList.add('show');
+        });
+        
+        function handleFile(file) {
+            if (isValidFile(file)) {
+                fileInput.files = new DataTransfer().files;
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                fileInput.files = dataTransfer.files;
+                updateFileInfo(file);
+            } else {
+                alert('Please select a valid CSV, XLS, or XLSX file.');
+            }
+        }
+
+        function isValidFile(file) {
+            const validExtensions = ['.csv', '.xls', '.xlsx'];
+            const fileName = file.name.toLowerCase();
+            return validExtensions.some(ext => fileName.endsWith(ext));
+        }
+
+        function updateFileInfo(file) {
+            fileNameEl.textContent = `📄 ${file.name} (${formatFileSize(file.size)})`;
+            fileInfo.classList.add('show');
+            submitBtn.disabled = false;
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+    });
+</script>
+
+{% endblock %}
